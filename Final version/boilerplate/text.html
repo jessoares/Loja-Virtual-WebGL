@@ -19,6 +19,11 @@ canvas {
   </head>
   <body>
 <canvas id="canvas"></canvas>
+  <div id="uiContainer">
+    <div id="ui">
+      <div id="angleY"></div>
+    </div>
+  </div>
 <!--
 This sample uses TWGL (Tiny WebGL) to hide the clutter.
 Otherwise the sample would be full of code not related to the point of the sample.
@@ -26,6 +31,7 @@ For more info see https://webgl2fundamentals.org/webgl/lessons/webgl-less-code-m
 -->
 <script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js"></script>
 <script src="https://webgl2fundamentals.org/webgl/resources/m4.js"></script>
+<script src="https://webgl2fundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
   </body>
   <script>
 // WebGL2 - load obj - w mtl, no textures
@@ -327,7 +333,7 @@ async function main() {
   // compiles and links the shaders, looks up attribute and uniform locations
   const meshProgramInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
-  const objHref = 'https://webgl2fundamentals.org/webgl/resources/models/chair/chair.obj';  
+  const objHref = 'Sword.obj';  
   const response = await fetch(objHref);
   const text = await response.text();
   const obj = parseOBJ(text);
@@ -415,7 +421,8 @@ async function main() {
   const cameraPosition = m4.addVectors(cameraTarget, [
     0,
     0,
-    radius,
+    50,
+    //radius
   ]);
   // Set zNear and zFar to something hopefully appropriate
   // for the size of this object.
@@ -425,6 +432,25 @@ async function main() {
   function degToRad(deg) {
     return deg * Math.PI / 180;
   }
+  function radToDeg(r) {
+    return r * 180 / Math.PI;
+  }
+  var rotation = degToRad(40);
+  function updateSlider(index)
+{
+  webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation), slide: updateRotation(), max: 360});
+
+}
+
+  function updateRotation() {
+    return function(event, ui) {     
+       var angleInDegrees = ui.value;
+      var angleInRadians = degToRad(angleInDegrees);
+      rotation = angleInRadians;
+    };
+  }
+  
+  updateSlider();
 
   function render(time) {
     time *= 0.001;  // convert to seconds
@@ -458,7 +484,9 @@ async function main() {
 
     // compute the world matrix once since all parts
     // are at the same space.
-    let u_world = m4.yRotation(time);
+    //let u_world = m4.yRotation(time);
+    let u_world = m4.identity();
+    u_world = m4.yRotate(u_world, rotation);
     u_world = m4.translate(u_world, ...objOffset);
 
     for (const {bufferInfo, vao, material} of parts) {
@@ -471,7 +499,6 @@ async function main() {
       // calls gl.drawArrays or gl.drawElements
       twgl.drawBufferInfo(gl, bufferInfo);
     }
-
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);

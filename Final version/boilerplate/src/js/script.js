@@ -1,5 +1,15 @@
 var objectsToDraw = [];
 var objects = [];
+var range;
+var extents;
+    
+var objOffset;
+var cameraTarget 
+var radius;
+var cameraPosition;
+        
+var zNear;
+var zFar;
 
 function parseOBJ(text) {
   // because indices are base 1 let's just fill in the 0th data
@@ -286,10 +296,13 @@ function generateTangents(position, texcoord, indices) {
 
 
 
-async function main(objName) {
+
+async function main() {
+
+
   const { gl, meshProgramInfo } = initializeWorld();
 
-  async function readOBJ(){
+  async function readOBJ(objName){
     const objHref = objName;  
     const response = await fetch(objHref);
     const text = await response.text();
@@ -341,20 +354,19 @@ async function main(objName) {
       
       if (data.color) {
         if (data.position.length === data.color.length) {
-          // it's 3. The our helper library assumes 4 so we need
-          // to tell it there are only 3.
+      
           data.color = { numComponents: 3, data: data.color };
         }
       } else {
-        // there are no vertex colors so just use constant white
+       
         data.color = { value: [1, 1, 1, 1] };
       }
   
-      // generate tangents if we have the data to do so.
+      
       if (data.texcoord && data.normal) {
         data.tangent = generateTangents(data.position, data.texcoord);
       } else {
-        // There are no tangents
+        
         data.tangent = { value: [1, 0, 0] };
       }
   
@@ -363,7 +375,7 @@ async function main(objName) {
       }
   
       if (!data.normal) {
-        // we probably want to generate normals if there are none
+       
         data.normal = { value: [0, 0, 1] };
       }
   
@@ -378,11 +390,6 @@ async function main(objName) {
         vao,
       };
     });
-    
-    objectsToDraw.push({
-      partes: parts,
-    });
-  
     function getExtents(positions) {
       const min = positions.slice(0, 3);
       const max = positions.slice(0, 3);
@@ -409,70 +416,45 @@ async function main(objName) {
       });
     }
   
-    const extents = getGeometriesExtents(obj.geometries);
-    const range = m4.subtractVectors(extents.max, extents.min);
-    // amount to move the object so its center is at the origin
-    const objOffset = m4.scaleVector(
+    extents = getGeometriesExtents(obj.geometries);
+    range = m4.subtractVectors(extents.max, extents.min);
+    
+    objOffset = m4.scaleVector(
         m4.addVectors(
           extents.min,
           m4.scaleVector(range, 0.5)),
         -1);
+
+    cameraTarget = [0, 0, 0];
+  
+    radius = m4.length(range) * 0.5;
+    cameraPosition = m4.addVectors(cameraTarget, [
+        0,
+        0,
+        30,
+    ]);
+        
+    zNear = radius / 1000;
+    zFar = radius * 1000;
+
+    objectsToDraw.push({
+      nome: objName,
+      partes: parts,
+      offset: objOffset,
+    });
+      
   }
 
 
+  var i = 0;
+  var j = 0;
 
+  await readOBJ('sword-01.obj');
+  await readOBJ('Sword.obj');
+  //await readOBJ('sword-01.obj');
 
-  readOBJ('sword-01.obj');
-  readOBJ('')
-  const cameraTarget = [0, 0, 0];
-  // figure out how far away to move the camera so we can likely
-  // see the object.
-  const radius = m4.length(range) * 0.5;
-  const cameraPosition = m4.addVectors(cameraTarget, [
-    0,
-    0,
-    radius,
-  ]);
-  // Set zNear and zFar to something hopefully appropriate
-  // for the size of this object.
-  const zNear = radius / 100;
-  const zFar = radius * 3;
-
-  function degToRad(deg) {
-    return deg * Math.PI / 180;
-  }
-
-
-  
-  var arrays = {
-    position: [0, 0, 0, 15, 0, 0, 0, 30, 0, 15, 30, 0,       0, 0, 7, 15, 0, 7, 0, 30, 7, 15, 30, 7],
-    texcoord: [0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1],
-    normal:   [0, 0, 1,    0, 0, 1,    0, 0, 1,  0, 0, 1,             0, 0, 1, 0, 0, 1,  0, 0, 1, 0, 0, 1,             0, 0, 1,  0, 1, 1,   0, 1, 1,   0, 1, 1,          0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,],
-    indices:  [0, 1, 2, 1, 2, 3,    4, 5, 6, 5, 6, 7,    0, 2, 4, 2, 4, 6,        1, 3, 5, 3, 5, 7 ]
- };
-  const translation = [0, 0, 0, 30, 30, -30, -30, 30, -30];
-  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40),degToRad(30),degToRad(190), degToRad(40), degToRad(30)];
-
-  //var bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
-  var i = 0
-  
-  /*const cubeVAO = twgl.createVAOFromBufferInfo(
-    gl,
-    meshProgramInfo,
-    bufferInfo,
-  );*/
-
-
-  //var sphereBufferInfo = flattenedPrimitives.createSphereBufferInfo(gl, 10, 12, 6);
-  //var sphereVAO = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, sphereBufferInfo);
-
-
-  //var coneBufferInfo   = flattenedPrimitives.createTruncatedConeBufferInfo(gl, 10, 0, 20, 12, 1, true, false);
-  //var coneVAO   = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, coneBufferInfo);
-
-
-  //var fieldOfViewRadians = degToRad(60);
-  //var cameraAngleRadians = degToRad(0);
+  const translation = [0, 0, 0, 1, 0, 0];
+  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)];
   
   var rand = function(min, max) {
     if (max === undefined) {
@@ -485,23 +467,6 @@ async function main(objName) {
   var randInt = function(range) {
     return Math.floor(Math.random() * range);
   };
-
-
- /* var baseColor = rand(240);
-  const cubeUniforms = {
-    u_colorMult:             chroma.hsv(rand(baseColor, baseColor + 120), 0.5, 1).gl(),
-    u_matrix:                m4.identity(),
-    u_lightWorldPos:         [-50, 30, 100],
-    u_viewInverse:           m4.identity(),
-    u_lightColor:            [1, 1, 1, 1],
-    u_world:                 m4.identity(),
-    u_worldInverseTranspose: m4.identity(),
-    u_diffuse:               textures[randInt(textures.length)],
-    u_specular:              [1, 1, 1, 1],
-    u_shininess:             rand(500),
-    u_specularFactor:        rand(1),
-
-  };*/
 
   yRotation = rand(Math.PI);
   xRotation = rand(Math.PI * 2);
@@ -539,8 +504,8 @@ function updateSlider(index)
   }
 
   function updateRotation(index) {
-    return function(event, ui) {
-      var angleInDegrees = ui.value;
+    return function(event, ui) {     
+       var angleInDegrees = ui.value;
       var angleInRadians = degToRad(angleInDegrees);
       rotation[index] = angleInRadians;
     };
@@ -575,9 +540,8 @@ function updateSlider(index)
 
     gl.useProgram(meshProgramInfo.program);
 */
-
   time *= 0.001;  // convert to seconds
-
+  j = 0;
   twgl.resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.enable(gl.DEPTH_TEST);
@@ -587,10 +551,9 @@ function updateSlider(index)
   const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
 
   const up = [0, 1, 0];
-// Compute the camera's matrix using look at.
+
   const camera = m4.lookAt(cameraPosition, cameraTarget, up);
 
-// Make a view matrix from the camera matrix.
   const view = m4.inverse(camera);
 
   const sharedUniforms = {
@@ -601,21 +564,21 @@ function updateSlider(index)
   };
 
   gl.useProgram(meshProgramInfo.program);
-
 // calls gl.uniform
   twgl.setUniforms(meshProgramInfo, sharedUniforms);
-
-
-  
   objectsToDraw.forEach(function(object){
-    let u_world =  m4.identity();
-    //let u_world = m4.yRotation(time);
-    u_world = m4.translate(u_world, ...objOffset);
-    u_world = m4.translate(u_world, translation[i], translation[i+1], translation[i+2]);
-    u_world = m4.xRotate(u_world, rotation[0]);
-    u_world = m4.yRotate(u_world, rotation[1]);
-    u_world = m4.zRotate(u_world, rotation[2]);
-    i = i + 3
+    let u_world = m4.identity();
+    if(object.nome == "Sword.obj"){
+      u_world = m4.scale(u_world, 10, 10, 10);
+    }
+    u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
+    u_world = m4.yRotate(u_world, rotation[j+1]);
+    u_world = m4.translate(u_world, ...object.offset);
+    //u_world = m4.xRotate(u_world, rotation[j]);
+    //u_world = m4.zRotate(u_world, rotation[j+2]);
+    
+    
+    j = j + 3;
     for (const {bufferInfo, vao, material} of object.partes) {
       gl.bindVertexArray(vao);
       twgl.setUniforms(meshProgramInfo, {
@@ -623,8 +586,9 @@ function updateSlider(index)
       }, material);
       twgl.drawBufferInfo(gl, bufferInfo);
     }
-  });
-
+    });
+    requestAnimationFrame(render);
+  }
 /*
  
     gl.bindVertexArray(cubeVAO);
@@ -691,8 +655,5 @@ function updateSlider(index)
 
     twgl.drawBufferInfo(gl, coneBufferInfo);
 */
-	  requestAnimationFrame(render);
-  }
-  requestAnimationFrame(render);
 }
 main();
