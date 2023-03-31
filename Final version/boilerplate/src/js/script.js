@@ -451,10 +451,12 @@ async function main() {
 
   await readOBJ('sword-01.obj');
   await readOBJ('Sword.obj');
-  //await readOBJ('sword-01.obj');
+  await readOBJ('KubikiribochoEND.obj');
+  await readOBJ('Sting-Sword-lowpoly.obj');
 
-  const translation = [0, 0, 0, 1, 0, 0];
-  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)];
+
+  const translation = [0, 0, -10, 1, 0, 0, 2, 0, 2, -50, 0, 20];
+  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)];
   
   var rand = function(min, max) {
     if (max === undefined) {
@@ -470,6 +472,7 @@ async function main() {
 
   yRotation = rand(Math.PI);
   xRotation = rand(Math.PI * 2);
+  var cameraAngleRadians = degToRad(0);
 
 
   const elem = document.querySelector('#toggle');
@@ -480,6 +483,9 @@ async function main() {
       }
       else if(i == 3) {
         i = 6;
+      }
+      else if(i == 6){
+        i = 9;
       }
       else{
         i = 0;
@@ -511,149 +517,78 @@ function updateSlider(index)
     };
   }
 
+  function updateCameraAngle(event, ui) {
+    cameraAngleRadians = degToRad(ui.value);
+  }
+
+
   function render(time) {
-    /*var radius = 70;
-    time = 1 + time * 0.001;
+
+    //var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    //var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
+
+
+    //var cameraMatrix = m4.yRotation(degToRad(20 * time));
+    //cameraMatrix = m4.translate(cameraMatrix, 0, 30, radius * 1.5);
+  
+    //var viewMatrix = m4.inverse(cameraMatrix);
+
+    //var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
+
+    time *= 0.001;  
+    j = 0;
     twgl.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.enable(gl.DEPTH_TEST);
-    //gl.enable(gl.CULL_FACE);
 
+    const fieldOfViewRadians = degToRad(60);
+    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
 
+    const up = [0, 1, 0];
+
+    var camera = m4.lookAt(cameraPosition, cameraTarget, up);
+    camera = m4.yRotation(degToRad(20 * time));
+    camera = m4.translate(camera, 0, 30, radius * 1.5);
     
-    var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 
-    //var cameraPosition = [0, 0, 100];
-    //var target = [0, 0, 0];
-    //var up = [0, 1, 0];
-    //var cameraMatrix = m4.lookAt(cameraPosition, target, up,cubeUniforms.u_viewInverse);
-    var cameraMatrix = m4.yRotation(degToRad(20 * time));
-    cameraMatrix = m4.translate(cameraMatrix, 0, 30, radius * 1.5);
-  
-    var viewMatrix = m4.inverse(cameraMatrix);
+    const view = m4.inverse(camera);
 
-    var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
-
-
-
+    const sharedUniforms = {
+      u_lightDirection: m4.normalize([-1, 3, 5]),
+      u_view: view,
+      u_projection: projection,
+      u_viewWorldPosition: cameraPosition,
+    };
 
     gl.useProgram(meshProgramInfo.program);
-*/
-  time *= 0.001;  // convert to seconds
-  j = 0;
-  twgl.resizeCanvasToDisplaySize(gl.canvas);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  gl.enable(gl.DEPTH_TEST);
 
-  const fieldOfViewRadians = degToRad(60);
-  const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-  const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-
-  const up = [0, 1, 0];
-
-  const camera = m4.lookAt(cameraPosition, cameraTarget, up);
-
-  const view = m4.inverse(camera);
-
-  const sharedUniforms = {
-    u_lightDirection: m4.normalize([-1, 3, 5]),
-    u_view: view,
-    u_projection: projection,
-    u_viewWorldPosition: cameraPosition,
-  };
-
-  gl.useProgram(meshProgramInfo.program);
-// calls gl.uniform
-  twgl.setUniforms(meshProgramInfo, sharedUniforms);
-  objectsToDraw.forEach(function(object){
-    let u_world = m4.identity();
-    if(object.nome == "Sword.obj"){
-      u_world = m4.scale(u_world, 10, 10, 10);
-    }
-    u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
-    u_world = m4.yRotate(u_world, rotation[j+1]);
-    u_world = m4.translate(u_world, ...object.offset);
-    //u_world = m4.xRotate(u_world, rotation[j]);
-    //u_world = m4.zRotate(u_world, rotation[j+2]);
+    twgl.setUniforms(meshProgramInfo, sharedUniforms);
+    objectsToDraw.forEach(function(object){
+      let u_world = m4.identity();
+      if(object.nome == "Sword.obj"){
+        u_world = m4.scale(u_world, 10, 10, 10);
+      }
+      else if(object.nome == "Sting-Sword-lowpoly.obj"){
+        u_world = m4.scale(u_world, 0.2, 0.2, 0.2);
+      }
+      u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
+      u_world = m4.yRotate(u_world, rotation[j+1]);
+      u_world = m4.xRotate(u_world, rotation[j]);
+      u_world = m4.zRotate(u_world, rotation[j+2]);
+      u_world = m4.translate(u_world, ...object.offset);
+   
     
-    
-    j = j + 3;
-    for (const {bufferInfo, vao, material} of object.partes) {
-      gl.bindVertexArray(vao);
-      twgl.setUniforms(meshProgramInfo, {
-        u_world,
-      }, material);
-      twgl.drawBufferInfo(gl, bufferInfo);
-    }
+      j = j + 3;
+      for (const {bufferInfo, vao, material} of object.partes) {
+        gl.bindVertexArray(vao);
+        twgl.setUniforms(meshProgramInfo, {
+          u_world,
+        }, material);
+        twgl.drawBufferInfo(gl, bufferInfo);
+      }
     });
-    requestAnimationFrame(render);
+     requestAnimationFrame(render);
   }
-/*
- 
-    gl.bindVertexArray(cubeVAO);
-    var worldMatrix = m4.identity();
-    
-    //worldMatrix = m4.yRotate(worldMatrix, yRotation * time);
-
-    worldMatrix = m4.translate(worldMatrix, translation[0], translation[1], translation[2]);
-
-    worldMatrix = m4.xRotate(worldMatrix, rotation[0]);
-    worldMatrix = m4.yRotate(worldMatrix, rotation[1]);
-    worldMatrix = m4.zRotate(worldMatrix, rotation[2]);
-    //worldMatrix = m4.xRotate(worldMatrix, xRotation * time);
-
-    m4.multiply(viewProjectionMatrix, worldMatrix, cubeUniforms.u_matrix);
-    
-    //m4.transpose(m4.inverse(worldMatrix), cubeUniforms.u_worldInverseTranspose);
-
-
-    twgl.setUniforms(meshProgramInfo, cubeUniforms);
-
-    twgl.drawBufferInfo(gl, bufferInfo);
-
-
-
-    gl.bindVertexArray()
-    var worldMatrix2 = m4.identity();
-    //worldMatrix2 = m4.yRotate(worldMatrix2, yRotation * time);
-
-    worldMatrix2 = m4.translate(worldMatrix2, translation[3], translation[4], translation[5]);
-
-    worldMatrix2 = m4.xRotate(worldMatrix2, rotation[3]);
-    worldMatrix2 = m4.yRotate(worldMatrix2, rotation[4]);
-    worldMatrix2 = m4.zRotate(worldMatrix2, rotation[5]);
-    //worldMatrix = m4.xRotate(worldMatrix, xRotation * time);
-
-    m4.multiply(viewProjectionMatrix, worldMatrix2, cubeUniforms.u_matrix);
-    
-    //m4.transpose(m4.inverse(worldMatrix), cubeUniforms.u_worldInverseTranspose);
-
-
-    twgl.setUniforms(meshProgramInfo, cubeUniforms);
-
-    twgl.drawBufferInfo(gl, sphereBufferInfo);
-
-
-    gl.bindVertexArray(coneVAO)
-    var worldMatrix3 = m4.identity();
-    //worldMatrix2 = m4.yRotate(worldMatrix2, yRotation * time);
-
-    worldMatrix3 = m4.translate(worldMatrix3, translation[6], translation[7], translation[8]);
-
-    worldMatrix3 = m4.xRotate(worldMatrix3, rotation[6]);
-    worldMatrix3 = m4.yRotate(worldMatrix3, rotation[7]);
-    worldMatrix3 = m4.zRotate(worldMatrix3, rotation[8]);
-    //worldMatrix = m4.xRotate(worldMatrix, xRotation * time);
-
-    m4.multiply(viewProjectionMatrix, worldMatrix3, cubeUniforms.u_matrix);
-    
-    //m4.transpose(m4.inverse(worldMatrix), cubeUniforms.u_worldInverseTranspose);
-
-
-    twgl.setUniforms(meshProgramInfo, cubeUniforms);
-
-    twgl.drawBufferInfo(gl, coneBufferInfo);
-*/
 }
 main();
