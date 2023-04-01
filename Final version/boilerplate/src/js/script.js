@@ -7,9 +7,12 @@ var objOffset;
 var cameraTarget 
 var radius;
 var cameraPosition;
+var counterFrames = 0;
         
 var zNear;
 var zFar;
+var storedTime = 0;
+var counter = 101;
 
 function parseOBJ(text) {
   // because indices are base 1 let's just fill in the 0th data
@@ -474,7 +477,6 @@ async function main() {
   xRotation = rand(Math.PI * 2);
   var cameraAngleRadians = degToRad(0);
 
-
   const elem = document.querySelector('#toggle');
   elem.addEventListener('click', () => {
     canvas.toBlob(() => {
@@ -490,7 +492,7 @@ async function main() {
       else{
         i = 0;
       }
-      counting = true;
+      counter = 0;
       updateSlider(i);
       });
   });
@@ -516,43 +518,32 @@ function updateSlider(index)
       rotation[index] = angleInRadians;
     };
   }
+  function render() {
+    counterFrames +=1;
+    console.log(counter);
+    if(counter <= 100){
+      storedTime = counterFrames;
+      counter +=1;
+    }
+    else{
+      counterFrames = storedTime;
+    }
 
-  function updateCameraAngle(event, ui) {
-    cameraAngleRadians = degToRad(ui.value);
-  }
-
-
-  function render(time) {
-
-    //var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    //var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
-
-
-    //var cameraMatrix = m4.yRotation(degToRad(20 * time));
-    //cameraMatrix = m4.translate(cameraMatrix, 0, 30, radius * 1.5);
-  
-    //var viewMatrix = m4.inverse(cameraMatrix);
-
-    //var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
-
-    time *= 0.001;  
     j = 0;
     twgl.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.enable(gl.DEPTH_TEST);
-
+    
     const fieldOfViewRadians = degToRad(60);
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
 
     const up = [0, 1, 0];
 
-    var camera = m4.lookAt(cameraPosition, cameraTarget, up);
-    camera = m4.yRotation(degToRad(20 * time));
-    camera = m4.translate(camera, 0, 30, radius * 1.5);
-    
-
-    const view = m4.inverse(camera);
+  
+    var camera = m4.yRotation(degToRad(counterFrames));
+    camera = m4.translate(camera, 0, 0, radius);
+    var view = m4.inverse(camera);
 
     const sharedUniforms = {
       u_lightDirection: m4.normalize([-1, 3, 5]),
@@ -560,8 +551,7 @@ function updateSlider(index)
       u_projection: projection,
       u_viewWorldPosition: cameraPosition,
     };
-
-    gl.useProgram(meshProgramInfo.program);
+     gl.useProgram(meshProgramInfo.program);
 
     twgl.setUniforms(meshProgramInfo, sharedUniforms);
     objectsToDraw.forEach(function(object){
@@ -577,8 +567,6 @@ function updateSlider(index)
       u_world = m4.xRotate(u_world, rotation[j]);
       u_world = m4.zRotate(u_world, rotation[j+2]);
       u_world = m4.translate(u_world, ...object.offset);
-   
-    
       j = j + 3;
       for (const {bufferInfo, vao, material} of object.partes) {
         gl.bindVertexArray(vao);
