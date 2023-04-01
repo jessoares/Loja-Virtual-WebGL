@@ -15,45 +15,34 @@ var storedTime = 0;
 var counter = 101;
 
 function parseOBJ(text) {
-  // because indices are base 1 let's just fill in the 0th data
   const objPositions = [[0, 0, 0]];
   const objTexcoords = [[0, 0]];
   const objNormals = [[0, 0, 0]];
   const objColors = [[0, 0, 0]];
-
-  // same order as `f` indices
   const objVertexData = [
     objPositions,
     objTexcoords,
     objNormals,
     objColors,
   ];
-
-  // same order as `f` indices
   let webglVertexData = [
     [],   // positions
     [],   // texcoords
     [],   // normals
     [],   // colors
   ];
-
   const materialLibs = [];
   const geometries = [];
   let geometry;
   let groups = ['default'];
   let material = 'default';
   let object = 'default';
-
   const noop = () => {};
-
   function newGeometry() {
-    // If there is an existing geometry and it's
-    // not empty then start a new one.
     if (geometry && geometry.data.position.length) {
       geometry = undefined;
     }
   }
-
   function setGeometry() {
     if (!geometry) {
       const position = [];
@@ -80,7 +69,6 @@ function parseOBJ(text) {
       geometries.push(geometry);
     }
   }
-
   function addVertex(vert) {
     const ptn = vert.split('/');
     ptn.forEach((objIndexStr, i) => {
@@ -97,7 +85,6 @@ function parseOBJ(text) {
       }
     });
   }
-
   const keywords = {
     v(parts) {
       // if there are more than 3 values here they are vertex colors
@@ -143,7 +130,6 @@ function parseOBJ(text) {
       newGeometry();
     },
   };
-
   const keywordRE = /(\w*)(?: )*(.*)/;
   const lines = text.split('\n');
   for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
@@ -170,28 +156,23 @@ function parseOBJ(text) {
     geometry.data = Object.fromEntries(
         Object.entries(geometry.data).filter(([, array]) => array.length > 0));
   }
-
   return {
     geometries,
     materialLibs,
   };
 }
-
 function parseMapArgs(unparsedArgs) {
   // TODO: handle options
   return unparsedArgs;
 }
-
 function parseMTL(text) {
   const materials = {};
   let material;
-
   const keywords = {
     newmtl(parts, unparsedArgs) {
       material = {};
       materials[unparsedArgs] = material;
     },
-    /* eslint brace-style:0 */
     Ns(parts)       { material.shininess      = parseFloat(parts[0]); },
     Ka(parts)       { material.ambient        = parts.map(parseFloat); },
     Kd(parts)       { material.diffuse        = parts.map(parseFloat); },
@@ -204,7 +185,6 @@ function parseMTL(text) {
     d(parts)        { material.opacity        = parseFloat(parts[0]); },
     illum(parts)    { material.illum          = parseInt(parts[0]); },
   };
-
   const keywordRE = /(\w*)(?: )*(.*)/;
   const lines = text.split('\n');
   for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
@@ -225,10 +205,8 @@ function parseMTL(text) {
     }
     handler(parts, unparsedArgs);
   }
-
   return materials;
 }
-
 function makeIndexIterator(indices) {
   let ndx = 0;
   const fn = () => indices[ndx++];
@@ -236,7 +214,6 @@ function makeIndexIterator(indices) {
   fn.numElements = indices.length;
   return fn;
 }
-
 function makeUnindexedIterator(positions) {
   let ndx = 0;
   const fn = () => ndx++;
@@ -244,35 +221,26 @@ function makeUnindexedIterator(positions) {
   fn.numElements = positions.length / 3;
   return fn;
 }
-
 const subtractVector2 = (a, b) => a.map((v, ndx) => v - b[ndx]);
-
 function generateTangents(position, texcoord, indices) {
   const getNextIndex = indices ? makeIndexIterator(indices) : makeUnindexedIterator(position);
   const numFaceVerts = getNextIndex.numElements;
   const numFaces = numFaceVerts / 3;
-
   const tangents = [];
   for (let i = 0; i < numFaces; ++i) {
     const n1 = getNextIndex();
     const n2 = getNextIndex();
     const n3 = getNextIndex();
-
     const p1 = position.slice(n1 * 3, n1 * 3 + 3);
     const p2 = position.slice(n2 * 3, n2 * 3 + 3);
     const p3 = position.slice(n3 * 3, n3 * 3 + 3);
-
     const uv1 = texcoord.slice(n1 * 2, n1 * 2 + 2);
     const uv2 = texcoord.slice(n2 * 2, n2 * 2 + 2);
     const uv3 = texcoord.slice(n3 * 2, n3 * 2 + 2);
-
     const dp12 = m4.subtractVectors(p2, p1);
     const dp13 = m4.subtractVectors(p3, p1);
-
     const duv12 = subtractVector2(uv2, uv1);
     const duv13 = subtractVector2(uv3, uv1);
-
-
     const f = 1.0 / (duv12[0] * duv13[1] - duv13[0] * duv12[1]);
     const tangent = Number.isFinite(f)
       ? m4.normalize(m4.scaleVector(m4.subtractVectors(
@@ -280,28 +248,13 @@ function generateTangents(position, texcoord, indices) {
           m4.scaleVector(dp13, duv12[1]),
         ), f))
       : [1, 0, 0];
-
     tangents.push(...tangent, ...tangent, ...tangent);
   }
-
   return tangents;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 async function main() {
-
 
   const { gl, meshProgramInfo } = initializeWorld();
 
@@ -317,12 +270,10 @@ async function main() {
       return await response.text();
     }));
     const materials = parseMTL(matTexts.join('\n'));
-  
     const textures = {
       defaultWhite: twgl.createTexture(gl, {src: [255, 255, 255, 255]}),
       defaultNormal: twgl.createTexture(gl, {src: [127, 127, 255, 0]}),
     };
-  
     for (const material of Object.values(materials)) {
       Object.entries(material)
         .filter(([key]) => key.endsWith('Map'))
@@ -336,12 +287,10 @@ async function main() {
           material[key] = texture;
         });
     }
-  
     Object.values(materials).forEach(m => {
       m.shininess = 25;
       m.specular = [3, 2, 1];
     });
-  
     const defaultMaterial = {
       diffuse: [1, 1, 1],
       diffuseMap: textures.defaultWhite,
@@ -352,36 +301,28 @@ async function main() {
       shininess: 400,
       opacity: 1,
     };
-  
     const parts = obj.geometries.map(({material, data}) => {
-      
       if (data.color) {
         if (data.position.length === data.color.length) {
       
           data.color = { numComponents: 3, data: data.color };
         }
       } else {
-       
         data.color = { value: [1, 1, 1, 1] };
       }
-  
-      
       if (data.texcoord && data.normal) {
         data.tangent = generateTangents(data.position, data.texcoord);
       } else {
         
         data.tangent = { value: [1, 0, 0] };
       }
-  
       if (!data.texcoord) {
         data.texcoord = { value: [0, 0] };
       }
-  
       if (!data.normal) {
        
         data.normal = { value: [0, 0, 1] };
       }
-  
       const bufferInfo = twgl.createBufferInfoFromArrays(gl, data);
       const vao = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, bufferInfo);
       return {
@@ -405,7 +346,6 @@ async function main() {
       }
       return {min, max};
     }
-  
     function getGeometriesExtents(geometries) {
       return geometries.reduce(({min, max}, {data}) => {
         const minMax = getExtents(data.position);
@@ -418,28 +358,23 @@ async function main() {
         max: Array(3).fill(Number.NEGATIVE_INFINITY),
       });
     }
-  
     extents = getGeometriesExtents(obj.geometries);
     range = m4.subtractVectors(extents.max, extents.min);
-    
     objOffset = m4.scaleVector(
         m4.addVectors(
           extents.min,
           m4.scaleVector(range, 0.5)),
         -1);
-
     cameraTarget = [0, 0, 0];
   
     radius = m4.length(range) * 0.5;
     cameraPosition = m4.addVectors(cameraTarget, [
         0,
         0,
-        30,
-    ]);
-        
+        100,
+    ]);      
     zNear = radius / 1000;
     zFar = radius * 1000;
-
     objectsToDraw.push({
       nome: objName,
       partes: parts,
@@ -447,8 +382,7 @@ async function main() {
     });
       
   }
-
-
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   var i = 0;
   var j = 0;
 
@@ -457,8 +391,7 @@ async function main() {
   await readOBJ('KubikiribochoEND.obj');
   await readOBJ('Sting-Sword-lowpoly.obj');
 
-
-  const translation = [0, 0, -10, 1, 0, 0, 2, 0, 2, -50, 0, 20];
+  const translation = [0, 0, -10, 1, 0, 0, 5, 0, 5 , -50, 0, 20];
   var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)];
   
   var rand = function(min, max) {
@@ -468,14 +401,6 @@ async function main() {
     }
     return min + Math.random() * (max - min);
   };
-
-  var randInt = function(range) {
-    return Math.floor(Math.random() * range);
-  };
-
-  yRotation = rand(Math.PI);
-  xRotation = rand(Math.PI * 2);
-  var cameraAngleRadians = degToRad(0);
 
   const elem = document.querySelector('#toggle');
   elem.addEventListener('click', () => {
@@ -499,16 +424,11 @@ async function main() {
   updateSlider(i);
   requestAnimationFrame(render);
 
-function updateSlider(index)
-{
-  webglLessonsUI.setupSlider("#angleX", {value: radToDeg(rotation[index]), slide: updateRotation(index), max: 360});
-  webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation[index+1]), slide: updateRotation(index+1), max: 360});
-  webglLessonsUI.setupSlider("#angleZ", {value: radToDeg(rotation[index+2]), slide: updateRotation(index+2), max: 360});
-}
-  function updatePosition(index) {
-    return function(event, ui) {
-      translation[index] = ui.value;
-    };
+  function updateSlider(index)
+  {
+    webglLessonsUI.setupSlider("#angleX", {value: radToDeg(rotation[index]), slide: updateRotation(index), max: 360});
+    webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation[index+1]), slide: updateRotation(index+1), max: 360});
+    webglLessonsUI.setupSlider("#angleZ", {value: radToDeg(rotation[index+2]), slide: updateRotation(index+2), max: 360});
   }
 
   function updateRotation(index) {
@@ -518,17 +438,18 @@ function updateSlider(index)
       rotation[index] = angleInRadians;
     };
   }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   function render() {
     counterFrames +=1;
     console.log(counter);
-    if(counter <= 100){
+    if(counter <= 89){
       storedTime = counterFrames;
       counter +=1;
     }
     else{
       counterFrames = storedTime;
     }
-
     j = 0;
     twgl.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -537,12 +458,10 @@ function updateSlider(index)
     const fieldOfViewRadians = degToRad(60);
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-
     const up = [0, 1, 0];
-
   
     var camera = m4.yRotation(degToRad(counterFrames));
-    camera = m4.translate(camera, 0, 0, radius);
+    camera = m4.translate(camera, 0, 0, 40);
     var view = m4.inverse(camera);
 
     const sharedUniforms = {
@@ -551,23 +470,41 @@ function updateSlider(index)
       u_projection: projection,
       u_viewWorldPosition: cameraPosition,
     };
-     gl.useProgram(meshProgramInfo.program);
-
+    
+    gl.useProgram(meshProgramInfo.program);
+    var ii = 0;
     twgl.setUniforms(meshProgramInfo, sharedUniforms);
+
+    var viewProjectionMatrix = m4.multiply(projection, view);
+
+    var ii = 0;
     objectsToDraw.forEach(function(object){
+
+      
       let u_world = m4.identity();
+      var angle = ii * Math.PI * 2 / 4;
+  
+      var x = Math.cos(angle) * 22;
+      var z = Math.sin(angle) * 22;
+      u_world = m4.translate(u_world, x, 0, z);
       if(object.nome == "Sword.obj"){
         u_world = m4.scale(u_world, 10, 10, 10);
       }
       else if(object.nome == "Sting-Sword-lowpoly.obj"){
         u_world = m4.scale(u_world, 0.2, 0.2, 0.2);
       }
-      u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
+
+
+
+      
+      //u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
       u_world = m4.yRotate(u_world, rotation[j+1]);
       u_world = m4.xRotate(u_world, rotation[j]);
       u_world = m4.zRotate(u_world, rotation[j+2]);
       u_world = m4.translate(u_world, ...object.offset);
-      j = j + 3;
+      j += 3;
+      ii += 1;
+
       for (const {bufferInfo, vao, material} of object.partes) {
         gl.bindVertexArray(vao);
         twgl.setUniforms(meshProgramInfo, {
