@@ -13,19 +13,32 @@
 </head>
 
 <body>
-    <canvas id="canvas"></canvas>
-    <div>     
-      <button id="toggle" type="button">Switch Object</button>
-      </div>
+   <td><canvas id="canvas"></canvas></td>    
+    <tr></tr>
+    <td>
     <div id="uiContainer">
+      <p>
+        <h2> Forja de espadas</h2>
+      </p>
         <div id="ui">
-          <div id="z"></div>
           <div id="angleX"></div>
           <div id="angleY"></div>
           <div id="angleZ"></div>
+          <div id="zoom"></div>
         </div>
       </div>
-    <!-- Scripts -->
+      <div id="info" style="padding: 2p;">
+        <button id="toggleleft" type="button">Turn left</button>
+        <button id="toggleright" type="button">Turn right</button>
+      </div>
+    </td>
+  </tr>
+
+
+
+
+
+    
     <script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js"></script>
     <script src="https://webgl2fundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
     <script src="https://webgl2fundamentals.org/webgl/resources/twgl-full.min.js"></script>

@@ -1,0 +1,8 @@
+newmtl lambert7
+Ka 0.972549 0.972549 0.972549
+Kd 0.7843137 0.7843137 0.7843137
+d 1
+Tr 1
+map_Ka lambert7.png
+map_Kd lambert7.png
+map_d lambert7.png

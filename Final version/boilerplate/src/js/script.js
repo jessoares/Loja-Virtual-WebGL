@@ -14,6 +14,8 @@ var zFar;
 var storedTime = 0;
 var counter = 101;
 
+var right = true;
+
 function parseOBJ(text) {
   const objPositions = [[0, 0, 0]];
   const objTexcoords = [[0, 0]];
@@ -161,6 +163,9 @@ function parseOBJ(text) {
     materialLibs,
   };
 }
+
+
+
 function parseMapArgs(unparsedArgs) {
   // TODO: handle options
   return unparsedArgs;
@@ -383,17 +388,20 @@ async function main() {
       
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  var i = 0;
+  var i = 3;
   var j = 0;
 
-  await readOBJ('sword-01.obj');
-  await readOBJ('Sword.obj');
-  await readOBJ('KubikiribochoEND.obj');
-  await readOBJ('Sting-Sword-lowpoly.obj');
+  await readOBJ('/boilerplate/Models/Sword1/sword-01.obj');
+  await readOBJ('/boilerplate/Models/Sword2/KubikiribochoEND.obj');
+  await readOBJ('/boilerplate/Models/Sword3/Sting-Sword-lowpoly.obj');
+  await readOBJ('/boilerplate/Models/Sword4/w026.obj');
+  await readOBJ('/boilerplate/Models/Sword5/Ancient Sword.obj')
+  await readOBJ('/boilerplate/Models/Sword6/swB.obj')
+  await readOBJ('/boilerplate/Models/Sword7/Sword.obj')
 
-  const translation = [0, 0, -10, 1, 0, 0, 5, 0, 5 , -50, 0, 20];
-  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)];
-  
+  var rotation = [degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30), degToRad(190), degToRad(40), degToRad(30)
+  ];
+  var cameraZoom = 60;
   var rand = function(min, max) {
     if (max === undefined) {
       max = min;
@@ -402,10 +410,54 @@ async function main() {
     return min + Math.random() * (max - min);
   };
 
-  const elem = document.querySelector('#toggle');
+
+  function updateSlider(index)
+  {
+    webglLessonsUI.setupSlider("#angleX", {value: radToDeg(rotation[index]), slide: updateRotation(index), max: 360});
+    webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation[index+1]), slide: updateRotation(index+1), max: 360});
+    webglLessonsUI.setupSlider("#angleZ", {value: radToDeg(rotation[index+2]), slide: updateRotation(index+2), max: 360});
+    webglLessonsUI.setupSlider("#zoom", {value: radToDeg(cameraZoom), slide: updateZoom(),min: 30, max: 50});
+  }
+
+  function updateRotation(index) {
+    return function(event, ui) {     
+       var angleInDegrees = ui.value;
+      var angleInRadians = degToRad(angleInDegrees);
+      rotation[index] = angleInRadians;
+    };
+  }
+
+  function updateZoom() {
+    return function(event, ui) {
+      cameraZoom = ui.value;
+    };
+  }
+
+  const elem = document.querySelector('#toggleright');
   elem.addEventListener('click', () => {
     canvas.toBlob(() => {
       if (i == 0) {
+        i = 9;                              
+      }
+      else if(i == 3) {
+        i = 0;
+      }
+      else if(i == 6){
+        i = 3;
+      }
+      else{
+        i =6;
+      }
+      counter = 0;
+      right = true;
+      updateSlider(i);
+      });
+  });
+
+  const elem2 = document.querySelector('#toggleleft');          
+  elem2.addEventListener('click', () => {
+    canvas.toBlob(() => {
+      if (i == 0) {                          
         i = 3;
       }
       else if(i == 3) {
@@ -418,32 +470,24 @@ async function main() {
         i = 0;
       }
       counter = 0;
+      right = false;
       updateSlider(i);
       });
   });
-  updateSlider(i);
-  requestAnimationFrame(render);
 
-  function updateSlider(index)
-  {
-    webglLessonsUI.setupSlider("#angleX", {value: radToDeg(rotation[index]), slide: updateRotation(index), max: 360});
-    webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation[index+1]), slide: updateRotation(index+1), max: 360});
-    webglLessonsUI.setupSlider("#angleZ", {value: radToDeg(rotation[index+2]), slide: updateRotation(index+2), max: 360});
-  }
 
-  function updateRotation(index) {
-    return function(event, ui) {     
-       var angleInDegrees = ui.value;
-      var angleInRadians = degToRad(angleInDegrees);
-      rotation[index] = angleInRadians;
-    };
-  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  updateSlider(i);
+  requestAnimationFrame(render);
   function render() {
+    if(right == true){
     counterFrames +=1;
-    console.log(counter);
-    if(counter <= 89){
+    }
+    else{
+      counterFrames -=1;
+    }
+    if(counter <= 50){
       storedTime = counterFrames;
       counter +=1;
     }
@@ -458,14 +502,21 @@ async function main() {
     const fieldOfViewRadians = degToRad(60);
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
-    const up = [0, 1, 0];
-  
-    var camera = m4.yRotation(degToRad(counterFrames));
-    camera = m4.translate(camera, 0, 0, 40);
+
+    camera = m4.yRotation(degToRad(counterFrames));
+    camera = m4.translate(camera, 0, 0, cameraZoom);
     var view = m4.inverse(camera);
 
+    var viewProjectionMatrix = m4.multiply(projection, view)
+
+    var currentCamera = [
+      camera[12],
+      camera[13],
+      camera[14],
+    ];
+    console.log(cameraPosition);
     const sharedUniforms = {
-      u_lightDirection: m4.normalize([-1, 3, 5]),
+      u_lightDirection: m4.normalize(currentCamera),
       u_view: view,
       u_projection: projection,
       u_viewWorldPosition: cameraPosition,
@@ -475,29 +526,24 @@ async function main() {
     var ii = 0;
     twgl.setUniforms(meshProgramInfo, sharedUniforms);
 
-    var viewProjectionMatrix = m4.multiply(projection, view);
-
     var ii = 0;
     objectsToDraw.forEach(function(object){
-
-      
-      let u_world = m4.identity();
-      var angle = ii * Math.PI * 2 / 4;
   
-      var x = Math.cos(angle) * 22;
-      var z = Math.sin(angle) * 22;
+      let u_world = m4.identity();
+      var angle = ii * Math.PI * 2 / 7;
+  
+      var x = Math.cos(angle) * 30;
+      var z = Math.sin(angle) * 30;
       u_world = m4.translate(u_world, x, 0, z);
-      if(object.nome == "Sword.obj"){
-        u_world = m4.scale(u_world, 10, 10, 10);
+      if(object.nome == "/boilerplate/Models/Sword6/swB.obj"){
+        u_world = m4.scale(u_world, 7, 7, 7);
       }
-      else if(object.nome == "Sting-Sword-lowpoly.obj"){
+      if(object.nome == "/boilerplate/Models/Sword3/Sting-Sword-lowpoly.obj"){
         u_world = m4.scale(u_world, 0.2, 0.2, 0.2);
       }
-
-
-
-      
-      //u_world = m4.translate(u_world,translation[j],translation[j+1],translation[j+2]);
+      if(object.nome == "/boilerplate/Models/Sword7/Sword.obj"){
+        u_world = m4.scale(u_world, 7, 7, 7);
+      }
       u_world = m4.yRotate(u_world, rotation[j+1]);
       u_world = m4.xRotate(u_world, rotation[j]);
       u_world = m4.zRotate(u_world, rotation[j+2]);

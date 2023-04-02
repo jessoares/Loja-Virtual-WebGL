@@ -18,7 +18,7 @@ const vs = `#version 300 es
 
   void main() {
     vec4 worldPosition = u_world * a_position;
-    gl_Position = u_projection * u_view *  worldPosition;
+    gl_Position = u_projection * u_view * worldPosition;
     v_surfaceToView = u_viewWorldPosition - worldPosition.xyz;
 
     mat3 normalMat = mat3(u_world);
@@ -82,7 +82,6 @@ const vs = `#version 300 es
         effectiveOpacity);
   }
   `;
-
 const initializeWorld = () => {
   const canvas = document.querySelector("#canvas");
   const gl = canvas.getContext("webgl2");
