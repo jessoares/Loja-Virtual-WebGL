@@ -6,7 +6,7 @@ var currentObjects = []; //Objetos renderizados no momento, carrinho ou loja
 var range;                
 var extents;
     
-var objOffset;       //variavel paara mexer objeto para que sua geometria fique em seu centro
+var objOffset;       //variavel paara mover erobjeto para que sua geometria fique em seu centro
 
 // Variaveis relevantes a camera:
 var cameraTarget    
@@ -24,9 +24,15 @@ var right = true;    // movimentação da camera
 var height = 0;        //Altura da camera para troca de posição
 var bought = 0;        //Quantos objetos no carrinho
 
-var changeColor = 0;
+var cores = [[1,0,0,1],[0,0,1,1],[1,1,1,1]]; //Vermelho azul Amarelo
+var dados;         
+var k = 0;
+var i = 6;                       // Indexadores para rotações e listas
+var j = 0;  
 
-var dados;
+
+
+
 
 //Funções usadas no parsing do arquivo
 
@@ -263,6 +269,12 @@ function generateTangents(position, texcoord, indices) {
 
 
 
+
+
+
+
+
+
 /////////////////////////////////////////////////////////     MAIN          /////////////////////////////////////////////////////////////////////////////
 
 async function main() {
@@ -302,7 +314,7 @@ async function main() {
       m.shininess = 25;
       m.specular = [3, 2, 1];
     });
-    const defaultMaterial = {
+    const defaultMaterial = {          //Uniforms 
       diffuse: [1, 1, 1],
       diffuseMap: textures.defaultWhite,
       normalMap: textures.defaultNormal,
@@ -335,7 +347,7 @@ async function main() {
         data.normal = { value: [0, 0, 1] };
       }
       dados = data;
-      console.log(dados);
+
       const bufferInfo = twgl.createBufferInfoFromArrays(gl, data);
       const vao = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, bufferInfo);
       return {
@@ -347,6 +359,7 @@ async function main() {
         vao,
       };
     });
+
     function getExtents(positions) {       //Ajuste do objeto
       const min = positions.slice(0, 3);
       const max = positions.slice(0, 3);
@@ -359,6 +372,7 @@ async function main() {
       }
       return {min, max};
     }
+
     function getGeometriesExtents(geometries) {
       return geometries.reduce(({min, max}, {data}) => {
         const minMax = getExtents(data.position);
@@ -371,6 +385,7 @@ async function main() {
         max: Array(3).fill(Number.NEGATIVE_INFINITY),
       });
     }
+
     extents = getGeometriesExtents(obj.geometries);
     range = m4.subtractVectors(extents.max, extents.min);
     objOffset = m4.scaleVector(
@@ -385,10 +400,13 @@ async function main() {
         0,
         0,
         100,
-    ]);      
+    ]);  
+
     zNear = radius / 1000;
     zFar = radius * 1000;
-    objectsToDraw.push({
+
+
+    objectsToDraw.push({       //cria um objeto por chamada em uma lista
       nome: objName,
       partes: parts,
       offset: objOffset,
@@ -400,9 +418,7 @@ async function main() {
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  var i = 6;                       // Indexadores para rotações e listas
-  var j = 0;                       
-
+                    
   await readOBJ('/boilerplate/Models/Sword1/sword-01.obj');         
   await readOBJ('/boilerplate/Models/Sword2/KubikiribochoEND.obj');
   await readOBJ('/boilerplate/Models/Sword3/Sting-Sword-lowpoly.obj');
@@ -411,11 +427,15 @@ async function main() {
   await readOBJ('/boilerplate/Models/Sword6/swB.obj')
   await readOBJ('/boilerplate/Models/Sword7/Sword.obj')
   currentObjects = objectsToDraw;
- 
-
-                    // array com rotações xyz de cada objeto                                                      //2                                             //1                                                        7                                                6                                                            5                                                            4                                       
+                    // array com rotações xyz de cada objeto                                                      
   var rotation = [degToRad(360),degToRad(360),degToRad(180),degToRad(180),degToRad(300),degToRad(269),degToRad(269),degToRad(180),degToRad(269),degToRad(90),degToRad(269),degToRad(269),degToRad(90),degToRad(269),degToRad(269),degToRad(180),degToRad(0),degToRad(50),degToRad(180),degToRad(180),degToRad(180)];
   var cameraZoom = 60;        //Zoom camera
+
+
+
+
+
+//////////////////////////////////////////////// UI //////////////////////////////////////////////////////////////////////
 
   function updateSlider(index)           //Sliders 
   {
@@ -438,6 +458,8 @@ async function main() {
       cameraZoom = ui.value;
     };
   }
+
+///////////////////////////////////////////////////////// BOTÕES ////////////////////////////////////////////////////
 
   const elem = document.querySelector('#toggleright');          //Rotação da camera para direita, encontra o index do proximo objeto na roda
   elem.addEventListener('click', () => {
@@ -542,16 +564,32 @@ async function main() {
   const elem5 = document.querySelector('#color');         
   elem5.addEventListener('click', () => {
     canvas.toBlob(() => { 
-    changeColor = 1;
-    currentObjects.forEach(function(object,index){
-    object.fullData.color = { value: [1, 0, 1, 1] };
-    });
+    if(i!=0)
+    {
+      var jj = i/3;
+    }
+    else{
+      var jj = i;
+    }
+    objectsToDraw[jj].fullData.color = {value: cores[k]};
+    for (var {bufferInfo, vao} of objectsToDraw[jj].partes) 
+    {
+      bufferInfo = twgl.createBufferInfoFromArrays(gl, objectsToDraw[jj].fullData);
+      vao = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, bufferInfo);
+    }
+    k+=1;
+    if(k>2){
+      k = 0;
+    }
   });
   });
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////   RENDER   //////////////////////////////////////////////////////////////////
   updateSlider(i);
   requestAnimationFrame(render);
+
+
+
   function render() {
     if(right == true){
     counterFrames +=1;                     // Se a direção atual é direita, o contador ira somar 1 em cada frame para o calculo do angulo de rotação da camera
@@ -598,7 +636,6 @@ async function main() {
 
     var ii = 0;
     currentObjects.forEach(function(object){
-  
       let u_world = m4.identity();
       var angle = ii * Math.PI * 2 / 7;         //angulo para renderização dos objetos em um circulo
   
@@ -622,12 +659,6 @@ async function main() {
       ii += 1;                      
 
       for (var {bufferInfo, vao, material} of object.partes) {
-        if(changeColor == 1)
-        {
-          bufferInfo = twgl.createBufferInfoFromArrays(gl, object.fullData);
-          vao = twgl.createVAOFromBufferInfo(gl, meshProgramInfo, bufferInfo);
-          changeColor = 0;
-        }
         gl.bindVertexArray(vao);
         twgl.setUniforms(meshProgramInfo, {
           u_world,

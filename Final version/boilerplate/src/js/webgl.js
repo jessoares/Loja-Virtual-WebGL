@@ -82,6 +82,7 @@ const vs = `#version 300 es
         effectiveOpacity);
   }
   `;
+  
 const initializeWorld = () => {
   const canvas = document.querySelector("#canvas");
   const gl = canvas.getContext("webgl2");

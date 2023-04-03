@@ -12,18 +12,32 @@ h2 {
   color: black;
 }
 
-#uiContainer {
-  top: 1px;
-  right: 2px;
-  background-color:brown;
-  height: 100%;
-}
-
 #info {
   position: absolute;
   top: 38%;
   background-color: rgba(255, 255, 255, 0.6);
   left: 1px;
 }
+
+h2 {
+  color: black;
+}
+#container {
+  position: relative;
+}
+
+#uiContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  top: 1px;
+  right: 0;
+  background-color:brown;
+  height: 100%;
+  width: 250px;
+}
+
+
+
 
 
