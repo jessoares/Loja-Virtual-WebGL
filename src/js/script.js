@@ -419,13 +419,13 @@ async function main() {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
-  await readOBJ('/boilerplate/Models/Sword1/sword-01.obj');         
-  await readOBJ('/boilerplate/Models/Sword2/KubikiribochoEND.obj');
-  await readOBJ('/boilerplate/Models/Sword3/Sting-Sword-lowpoly.obj');
-  await readOBJ('/boilerplate/Models/Sword4/w026.obj');
-  await readOBJ('/boilerplate/Models/Sword5/Ancient Sword.obj')
-  await readOBJ('/boilerplate/Models/Sword6/swB.obj')
-  await readOBJ('/boilerplate/Models/Sword7/Sword.obj')
+  await readOBJ('/Models/Sword1/sword-01.obj');         
+  await readOBJ('Models/Sword2/KubikiribochoEND.obj');
+  await readOBJ('/Models/Sword3/Sting-Sword-lowpoly.obj');
+  await readOBJ('/Models/Sword4/w026.obj');
+  await readOBJ('/Models/Sword5/Ancient Sword.obj')
+  await readOBJ('/Models/Sword6/swB.obj')
+  await readOBJ('/Models/Sword7/Sword.obj')
   currentObjects = objectsToDraw;
                     // array com rotações xyz de cada objeto                                                      
   var rotation = [degToRad(360),degToRad(360),degToRad(180),degToRad(180),degToRad(300),degToRad(269),degToRad(269),degToRad(180),degToRad(269),degToRad(90),degToRad(269),degToRad(269),degToRad(90),degToRad(269),degToRad(269),degToRad(180),degToRad(0),degToRad(50),degToRad(180),degToRad(180),degToRad(180)];
@@ -642,13 +642,13 @@ async function main() {
       var x = Math.cos(angle) * 30;
       var z = Math.sin(angle) * 30;
       u_world = m4.translate(u_world, x, height, z);               //coloca objeto na posição
-      if(object.nome == "/boilerplate/Models/Sword6/swB.obj"){   //Escalonamentos de tamanho de objetos
+      if(object.nome == "/Models/Sword6/swB.obj"){   //Escalonamentos de tamanho de objetos
         u_world = m4.scale(u_world, 7, 7, 7);
       }
-      if(object.nome == "/boilerplate/Models/Sword3/Sting-Sword-lowpoly.obj"){
+      if(object.nome == "/Models/Sword3/Sting-Sword-lowpoly.obj"){
         u_world = m4.scale(u_world, 0.2, 0.2, 0.2);
       }
-      if(object.nome == "/boilerplate/Models/Sword7/Sword.obj"){
+      if(object.nome == "/Models/Sword7/Sword.obj"){
         u_world = m4.scale(u_world, 7, 7, 7);
       }
       u_world = m4.xRotate(u_world, rotation[j]);
